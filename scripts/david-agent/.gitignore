@@ -1,0 +1,4 @@
+.env
+.phoenix/
+node_modules/
+*.log

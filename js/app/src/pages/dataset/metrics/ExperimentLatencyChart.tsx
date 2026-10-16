@@ -2,6 +2,7 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
+  interpolateBarEntrance,
   ChartResponsiveContainer,
   InteractiveLegend,
   compactChartMargin,
@@ -85,6 +86,7 @@ export function ExperimentLatencyChart({
           <Tooltip content={TooltipContent} {...defaultTooltipProps} />
           <ExperimentBaselineValueLine value={baselineLatency} />
           <Bar
+            animationInterpolateFn={interpolateBarEntrance}
             dataKey={LATENCY_DATA_KEY}
             name="average latency"
             fill={gray300}

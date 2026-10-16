@@ -5,6 +5,7 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import {
   ChartEmptyStateOverlay,
   ChartResponsiveContainer,
+  interpolateBarEntrance,
   InteractiveLegend,
   TimeRangeChartBrush,
   compactChartMargin,
@@ -113,13 +114,16 @@ export function TraceCountTimeSeries({
               syncId={PROJECT_METRICS_CHART_SYNC_ID}
               {...chartProps}
             >
+              {/* Keep the entrance animation inside the current plot bounds. */}
               <XAxis
                 {...compactTimeXAxisProps}
+                allowDataOverflow
                 domain={[timeRange.start.getTime(), timeRange.end.getTime()]}
                 tickFormatter={(x) => timeTickFormatter(new Date(x))}
               />
               <YAxis
                 {...compactYAxisProps}
+                allowDataOverflow
                 allowDecimals={false}
                 tickFormatter={(x) => intFormatter(x)}
               />
@@ -130,12 +134,14 @@ export function TraceCountTimeSeries({
                 {...defaultTooltipProps}
               />
               <Bar
+                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="error"
                 stackId="a"
                 fill={SemanticChartColors.danger}
                 hide={isDataKeyHidden("error")}
               />
               <Bar
+                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="ok"
                 stackId="a"
                 fill={colors.gray300}
