@@ -37,10 +37,10 @@ function useWindowEvent(event: string, handler: (e) => void) {
 }
 ```
 
-**Alternative: use `useEffectEvent` if you're on latest React:**
+**Alternative: use `useEffectEvent` when supported by the project's React version:**
 
 ```tsx
-import { useEffectEvent } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 
 function useWindowEvent(event: string, handler: (e) => void) {
   const onEvent = useEffectEvent(handler)
@@ -52,4 +52,6 @@ function useWindowEvent(event: string, handler: (e) => void) {
 }
 ```
 
-`useEffectEvent` provides a cleaner API for the same pattern: it creates a stable function reference that always calls the latest version of the handler.
+`useEffectEvent` reads the latest committed handler without making it a subscription dependency. Its function identity changes between renders. Omit the Effect Event from dependencies, retain reactive dependencies such as `event`, and call it only from Effects or callbacks registered by those Effects. It is not a general-purpose stable callback to pass to children or other Hooks.
+
+Reference: [useEffectEvent](https://react.dev/reference/react/useEffectEvent).

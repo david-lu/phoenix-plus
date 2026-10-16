@@ -11,6 +11,15 @@ metadata:
 
 Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Contains 70 rules across 8 categories, prioritized by impact to guide automated refactoring and code generation.
 
+## Applying these rules in Phoenix
+
+`js/app/` uses Vite, Relay, and React Compiler. Follow `phoenix-frontend` for local component and data-fetching conventions. Apply a rule only when its framework and runtime assumptions match the code being changed:
+
+- Keep Relay for existing GraphQL flows. The SWR examples do not require adding a second data-fetching library.
+- Next.js, Server Component, Server Action, and SSR examples apply to projects using those features; they are not Phoenix app APIs.
+- With React Compiler, omit routine manual memoization from generic examples. Add it only for a demonstrated need, as described in `phoenix-frontend`.
+- Use profiling or a concrete loading/rendering problem to select performance work; the impact labels do not require speculative refactoring.
+
 ## When to Apply
 
 Reference these guidelines when:
@@ -101,7 +110,7 @@ Reference these guidelines when:
 - `rendering-hydration-suppress-warning` - Suppress expected mismatches
 - `rendering-activity` - Use Activity component for show/hide
 - `rendering-conditional-render` - Use ternary, not && for conditionals
-- `rendering-usetransition-loading` - Prefer useTransition for loading state
+- `rendering-usetransition-loading` - Track pending non-urgent Actions; handle request ordering separately
 - `rendering-resource-hints` - Use React DOM resource hints for preloading
 - `rendering-script-defer-async` - Use defer or async on script tags
 
@@ -127,7 +136,7 @@ Reference these guidelines when:
 - `advanced-effect-event-deps` - Don't put `useEffectEvent` results in effect deps
 - `advanced-event-handler-refs` - Store event handlers in refs
 - `advanced-init-once` - Initialize app once per app load
-- `advanced-use-latest` - useLatest for stable callback refs
+- `advanced-use-latest` - Read latest values in Effect callbacks with useEffectEvent
 
 ## How to Use
 
