@@ -5,7 +5,6 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import { Text } from "@phoenix/components";
 import {
   ChartEmptyStateOverlay,
-  interpolateBarEntrance,
   ChartResponsiveContainer,
   ChartTooltip,
   ChartTooltipItem,
@@ -166,14 +165,12 @@ export function TraceTokenCostTimeSeries({
                 {...defaultTooltipProps}
               />
               <Bar
-                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="prompt"
                 stackId="a"
                 fill={colors.category1}
                 hide={isDataKeyHidden("prompt")}
               />
               <Bar
-                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="completion"
                 stackId="a"
                 fill={colors.category2}

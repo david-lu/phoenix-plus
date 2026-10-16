@@ -3,7 +3,6 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
-  interpolateBarEntrance,
   ChartResponsiveContainer,
   InteractiveLegend,
   compactChartMargin,
@@ -143,7 +142,6 @@ export function TopModelsByCost({
           />
           {series.map((tokenSeries) => (
             <Bar
-              animationInterpolateFn={interpolateBarEntrance}
               dataKey={tokenSeries.dataKey}
               fill={colorByDataKey.get(tokenSeries.dataKey)}
               hide={isDataKeyHidden(tokenSeries.dataKey)}

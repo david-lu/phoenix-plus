@@ -2,7 +2,6 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
-  interpolateBarEntrance,
   ChartResponsiveContainer,
   InteractiveLegend,
   compactChartMargin,
@@ -96,7 +95,6 @@ export function ExperimentCostChart({
           <Tooltip content={TooltipContent} {...defaultTooltipProps} />
           <ExperimentBaselineValueLine value={baselineCost} />
           <Bar
-            animationInterpolateFn={interpolateBarEntrance}
             dataKey="prompt"
             stackId="a"
             fill={colors.category1}
@@ -104,7 +102,6 @@ export function ExperimentCostChart({
             legendType="circle"
           />
           <Bar
-            animationInterpolateFn={interpolateBarEntrance}
             dataKey="completion"
             stackId="a"
             fill={colors.category2}

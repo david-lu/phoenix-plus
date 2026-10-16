@@ -2,7 +2,6 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
-  interpolateBarEntrance,
   ChartResponsiveContainer,
   ChartTooltipItem,
   InteractiveLegend,
@@ -112,7 +111,6 @@ export function ExperimentErrorRateChart({
           <Tooltip content={TooltipContent} {...defaultTooltipProps} />
           <ExperimentBaselineValueLine value={baselineErrorRate} />
           <Bar
-            animationInterpolateFn={interpolateBarEntrance}
             dataKey={ERROR_RATE_DATA_KEY}
             name="error rate"
             fill={semanticChartColors.danger}

@@ -5,7 +5,6 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import { Text } from "@phoenix/components";
 import {
   ChartEmptyStateOverlay,
-  interpolateBarEntrance,
   ChartResponsiveContainer,
   ChartTooltip,
   ChartTooltipItem,
@@ -262,14 +261,12 @@ export function TraceTokenCountTimeSeries({
                 {...defaultTooltipProps}
               />
               <Bar
-                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="prompt"
                 stackId="a"
                 fill={colors.category1}
                 hide={isDataKeyHidden("prompt")}
               />
               <Bar
-                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="completion"
                 stackId="a"
                 fill={colors.category2}
@@ -375,7 +372,6 @@ function TraceTokenDetailsTimeSeries({
                 const dataKey = getTokenDetailDataKey(tokenType);
                 return (
                   <Bar
-                    animationInterpolateFn={interpolateBarEntrance}
                     dataKey={dataKey}
                     fill={getTokenDetailColor({ colors, index, tokenType })}
                     hide={isDataKeyHidden(dataKey)}

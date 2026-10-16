@@ -3,7 +3,6 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
-  interpolateBarEntrance,
   ChartResponsiveContainer,
   InteractiveLegend,
   TimeRangeChartBrush,
@@ -120,7 +119,6 @@ export function SpanErrorsTimeSeries({
                 {...defaultTooltipProps}
               />
               <Bar
-                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="error"
                 stackId="a"
                 fill={SemanticChartColors.danger}

@@ -44,7 +44,6 @@ import {
   defaultTooltipProps,
 } from "./defaults";
 import { InteractiveLegend, useInteractiveLegend } from "./InteractiveLegend";
-import { interpolateBarEntrance } from "./interpolateBarEntrance";
 import type { TimeSeriesChartType } from "./types";
 
 const MEAN_SCORE_DATA_KEY = "meanScore";
@@ -266,7 +265,6 @@ function AnnotationMetricsChartContent({
           })}
           {isScoreView && !isScoreLine && (
             <Bar
-              animationInterpolateFn={interpolateBarEntrance}
               dataKey={MEAN_SCORE_DATA_KEY}
               name="mean score"
               fill={getWordColor({ word: series.name, theme })}
@@ -293,7 +291,6 @@ function AnnotationMetricsChartContent({
               const dataKey = getLabelDataKey(index);
               return (
                 <Bar
-                  animationInterpolateFn={interpolateBarEntrance}
                   key={label}
                   dataKey={dataKey}
                   name={label}
@@ -313,7 +310,6 @@ function AnnotationMetricsChartContent({
             })}
           {!isScoreView && hasOtherValues && (
             <Bar
-              animationInterpolateFn={interpolateBarEntrance}
               dataKey={OTHER_DATA_KEY}
               name="other"
               stackId="distribution"
