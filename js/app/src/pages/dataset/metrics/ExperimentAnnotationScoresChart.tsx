@@ -11,6 +11,7 @@ import {
 
 import {
   ChartEmptyStateOverlay,
+  interpolateBarEntrance,
   ChartResponsiveContainer,
   ChartTooltip,
   ChartTooltipItem,
@@ -170,6 +171,7 @@ export function ExperimentAnnotationScoresChart({
             // them would imply a trend
             return isComparedSelection ? (
               <Bar
+                animationInterpolateFn={interpolateBarEntrance}
                 key={key}
                 {...markProps}
                 fill={color}

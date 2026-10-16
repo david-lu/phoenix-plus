@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { graphql, useLazyLoadQuery } from "react-relay";
-import { BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
   ChartResponsiveContainer,
-  ScaledBar,
+  interpolateBarEntrance,
   InteractiveLegend,
   TimeRangeChartBrush,
   compactChartMargin,
@@ -151,19 +151,22 @@ export function SpanCountTimeSeries({
                 content={CountTimeSeriesTooltipContent}
                 {...defaultTooltipProps}
               />
-              <ScaledBar
+              <Bar
+                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="error"
                 stackId="a"
                 fill={SemanticChartColors.danger}
                 hide={isDataKeyHidden("error")}
               />
-              <ScaledBar
+              <Bar
+                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="unset"
                 stackId="a"
                 fill={colors.gray500}
                 hide={isDataKeyHidden("unset")}
               />
-              <ScaledBar
+              <Bar
+                animationInterpolateFn={interpolateBarEntrance}
                 dataKey="ok"
                 stackId="a"
                 fill={colors.gray300}

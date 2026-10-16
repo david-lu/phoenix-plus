@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
+  interpolateBarEntrance,
   ChartResponsiveContainer,
   ChartTooltip,
   ChartTooltipItem,
@@ -271,6 +272,7 @@ function ExperimentTokenDetailsChart({
             const dataKey = getTokenDetailDataKey(tokenType);
             return (
               <Bar
+                animationInterpolateFn={interpolateBarEntrance}
                 dataKey={dataKey}
                 fill={getTokenDetailColor({ colors, index, tokenType })}
                 hide={isDataKeyHidden(dataKey)}
