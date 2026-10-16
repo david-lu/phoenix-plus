@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { graphql, useLazyLoadQuery } from "react-relay";
-import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
+import { BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
   ChartEmptyStateOverlay,
   ChartResponsiveContainer,
+  ScaledBar,
   InteractiveLegend,
   TimeRangeChartBrush,
   compactChartMargin,
@@ -113,13 +114,16 @@ export function TraceCountTimeSeries({
               syncId={PROJECT_METRICS_CHART_SYNC_ID}
               {...chartProps}
             >
+              {/* Keep the entrance animation inside the current plot bounds. */}
               <XAxis
                 {...compactTimeXAxisProps}
+                allowDataOverflow
                 domain={[timeRange.start.getTime(), timeRange.end.getTime()]}
                 tickFormatter={(x) => timeTickFormatter(new Date(x))}
               />
               <YAxis
                 {...compactYAxisProps}
+                allowDataOverflow
                 allowDecimals={false}
                 tickFormatter={(x) => intFormatter(x)}
               />
@@ -129,13 +133,13 @@ export function TraceCountTimeSeries({
                 // TODO formalize this
                 {...defaultTooltipProps}
               />
-              <Bar
+              <ScaledBar
                 dataKey="error"
                 stackId="a"
                 fill={SemanticChartColors.danger}
                 hide={isDataKeyHidden("error")}
               />
-              <Bar
+              <ScaledBar
                 dataKey="ok"
                 stackId="a"
                 fill={colors.gray300}
