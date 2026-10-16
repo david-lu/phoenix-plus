@@ -526,6 +526,14 @@ export function DatasetsTable(props: DatasetsTableProps) {
       css={css`
         flex: 1 1 auto;
         overflow: auto;
+        container-type: inline-size;
+
+        /* Center the empty state in the visible panel as the columns scroll. */
+        .is-empty td > div {
+          position: sticky;
+          inset-inline-start: var(--global-dimension-size-500);
+          width: calc(100cqi - 2 * var(--global-dimension-size-500));
+        }
       `}
       onScroll={(e) => fetchMoreOnBottomReached(e.target as HTMLDivElement)}
       ref={tableContainerRef}
