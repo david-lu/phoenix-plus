@@ -18,15 +18,6 @@ Comprehensive performance optimization guide for React and Next.js applications,
 
 ---
 
-## Applying these rules in Phoenix
-
-`js/app/` uses Vite, Relay, and React Compiler. Follow `phoenix-frontend` for local component and data-fetching conventions. Apply a rule only when its framework and runtime assumptions match the code being changed:
-
-- Keep Relay for existing GraphQL flows. The SWR examples do not require adding a second data-fetching library.
-- Next.js, Server Component, Server Action, and SSR examples apply to projects using those features; they are not Phoenix app APIs.
-- With React Compiler, omit routine manual memoization from generic examples. Add it only for a demonstrated need, as described in `phoenix-frontend`.
-- Use profiling or a concrete loading/rendering problem to select performance work; the impact labels do not require speculative refactoring.
-
 ## Table of Contents
 
 1. [Eliminating Waterfalls](#1-eliminating-waterfalls) — **CRITICAL**
@@ -86,7 +77,7 @@ Comprehensive performance optimization guide for React and Next.js applications,
    - 6.8 [Use defer or async on Script Tags](#68-use-defer-or-async-on-script-tags)
    - 6.9 [Use Explicit Conditional Rendering](#69-use-explicit-conditional-rendering)
    - 6.10 [Use React DOM Resource Hints](#610-use-react-dom-resource-hints)
-   - 6.11 [Use useTransition for Non-Urgent Actions](#611-use-usetransition-for-non-urgent-actions)
+   - 6.11 [Use useTransition Over Manual Loading States](#611-use-usetransition-over-manual-loading-states)
 7. [JavaScript Performance](#7-javascript-performance) — **LOW-MEDIUM**
    - 7.1 [Avoid Layout Thrashing](#71-avoid-layout-thrashing)
    - 7.2 [Build Index Maps for Repeated Lookups](#72-build-index-maps-for-repeated-lookups)
@@ -106,7 +97,7 @@ Comprehensive performance optimization guide for React and Next.js applications,
    - 8.1 [Do Not Put Effect Events in Dependency Arrays](#81-do-not-put-effect-events-in-dependency-arrays)
    - 8.2 [Initialize App Once, Not Per Mount](#82-initialize-app-once-not-per-mount)
    - 8.3 [Store Event Handlers in Refs](#83-store-event-handlers-in-refs)
-   - 8.4 [Read Latest Values in Effect Callbacks](#84-read-latest-values-in-effect-callbacks)
+   - 8.4 [useEffectEvent for Stable Callback Refs](#84-useeffectevent-for-stable-callback-refs)
 
 ---
 
@@ -2786,68 +2777,87 @@ function Navigation() {
 
 Reference: [https://react.dev/reference/react-dom#resource-preloading-apis](https://react.dev/reference/react-dom#resource-preloading-apis)
 
-### 6.11 Use useTransition for Non-Urgent Actions
+### 6.11 Use useTransition Over Manual Loading States
 
-**Impact: LOW (tracks pending actions while keeping input responsive)**
+**Impact: LOW (reduces re-renders and improves code clarity)**
 
-Use `useTransition` when an Action updates non-urgent UI and needs pending feedback. Explicit loading state or a data library's pending state remains appropriate for other work. A transition does not cancel network requests or guarantee their completion order.
+Use `useTransition` instead of manual `useState` for loading states. This provides built-in `isPending` state and automatically manages transitions.
 
-Keep controlled input updates urgent. State updates after `await` need another `startTransition` to be marked as transitions. When requests can overlap, handle stale responses separately:
+**Incorrect: manual loading state**
 
 ```tsx
-import { useRef, useState, useTransition } from 'react'
-
-function SearchResults({
-  fetchResults,
-}: {
-  fetchResults: (query: string) => Promise<string[]>
-}) {
+function SearchResults() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<string[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
-  const latestRequest = useRef(0)
+  const [results, setResults] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSearch = (value: string) => {
+  const handleSearch = async (value: string) => {
+    setIsLoading(true)
     setQuery(value)
-    setError(null)
-    const requestId = ++latestRequest.current
-
-    startTransition(async () => {
-      try {
-        const data = await fetchResults(value)
-        if (requestId !== latestRequest.current) return
-
-        startTransition(() => {
-          setResults(data)
-        })
-      } catch {
-        if (requestId !== latestRequest.current) return
-        startTransition(() => {
-          setError('Search failed. Try again.')
-        })
-      }
-    })
+    const data = await fetchResults(value)
+    setResults(data)
+    setIsLoading(false)
   }
 
   return (
     <>
-      <input
-        aria-label="Search"
-        value={query}
-        onChange={(event) => handleSearch(event.target.value)}
-      />
-      {isPending && <p role="status">Searching…</p>}
-      {error && <p role="alert">{error}</p>}
-      <ul>{results.map((result, index) => <li key={index}>{result}</li>)}</ul>
+      <input onChange={(e) => handleSearch(e.target.value)} />
+      {isLoading && <Spinner />}
+      <ResultsList results={results} />
     </>
   )
 }
 ```
 
-The request ID prevents older responses from replacing newer results; it does not abort the requests. React currently batches overlapping transitions, so pending state and result rendering can wait for earlier Actions to finish. Use the data layer's cancellation/ordering support when available. In Phoenix, use the existing Relay flow and shared `DebouncedSearch` field rather than copying this standalone fetch example.
+**Correct: useTransition with built-in pending state**
 
-Reference: [useTransition](https://react.dev/reference/react/useTransition).
+```tsx
+import { useTransition, useState } from 'react'
+
+function SearchResults() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [isPending, startTransition] = useTransition()
+
+  const handleSearch = (value: string) => {
+    setQuery(value) // Update input immediately
+    
+    startTransition(async () => {
+      // Fetch and update results
+      const data = await fetchResults(value)
+      setResults(data)
+    })
+  }
+
+  return (
+    <>
+      <input onChange={(e) => handleSearch(e.target.value)} />
+      {isPending && <Spinner />}
+      <ResultsList results={results} />
+    </>
+  )
+}
+```
+
+**Benefits:**
+
+- **Automatic pending state**: No need to manually manage `setIsLoading(true/false)`
+
+- **Error resilience**: Pending state correctly resets even if the transition throws
+
+- **Better responsiveness**: Keeps the UI responsive during updates
+
+- **Interrupt handling**: New transitions automatically cancel pending ones
+
+Reference: [https://react.dev/reference/react/useTransition](https://react.dev/reference/react/useTransition)
+
+---
+
+## 7. JavaScript Performance
+
+**Impact: LOW-MEDIUM**
+
+Micro-optimizations for hot paths can add up to meaningful improvements.
 
 ### 7.1 Avoid Layout Thrashing
 
@@ -3722,7 +3732,7 @@ Reference: [https://react.dev/learn/you-might-not-need-an-effect#initializing-th
 
 Store callbacks in refs when used in effects that shouldn't re-subscribe on callback changes.
 
-**Incorrect (re-subscribes on every render):**
+**Incorrect: re-subscribes on every render**
 
 ```tsx
 function useWindowEvent(event: string, handler: (e) => void) {
@@ -3733,27 +3743,10 @@ function useWindowEvent(event: string, handler: (e) => void) {
 }
 ```
 
-**Correct (stable subscription):**
+**Correct: stable subscription**
 
 ```tsx
-function useWindowEvent(event: string, handler: (e) => void) {
-  const handlerRef = useRef(handler)
-  useEffect(() => {
-    handlerRef.current = handler
-  }, [handler])
-
-  useEffect(() => {
-    const listener = (e) => handlerRef.current(e)
-    window.addEventListener(event, listener)
-    return () => window.removeEventListener(event, listener)
-  }, [event])
-}
-```
-
-**Alternative: use `useEffectEvent` when supported by the project's React version:**
-
-```tsx
-import { useEffect, useEffectEvent } from 'react'
+import { useEffectEvent } from 'react'
 
 function useWindowEvent(event: string, handler: (e) => void) {
   const onEvent = useEffectEvent(handler)
@@ -3765,19 +3758,17 @@ function useWindowEvent(event: string, handler: (e) => void) {
 }
 ```
 
-`useEffectEvent` reads the latest committed handler without making it a subscription dependency. Its function identity changes between renders. Omit the Effect Event from dependencies, retain reactive dependencies such as `event`, and call it only from Effects or callbacks registered by those Effects. It is not a general-purpose stable callback to pass to children or other Hooks.
+**Alternative: use `useEffectEvent` if you're on latest React:**
 
-Reference: [useEffectEvent](https://react.dev/reference/react/useEffectEvent).
+`useEffectEvent` provides a cleaner API for the same pattern: it creates a stable function reference that always calls the latest version of the handler.
 
-### 8.4 Read Latest Values in Effect Callbacks
+### 8.4 useEffectEvent for Stable Callback Refs
 
 **Impact: LOW (prevents effect re-runs)**
 
-Use `useEffectEvent` when a callback belongs to an Effect and should read current values without restarting that Effect. Keep values that should restart the Effect in its dependency array. The returned function does not have stable identity and must not be passed to children or other Hooks.
+Access latest values in callbacks without adding them to dependency arrays. Prevents effect re-runs while avoiding stale closures.
 
-In this debounce example, changes to `query` restart the timer; changes to `onSearch` should not. If changing the callback should restart the work, include it as a normal Effect dependency instead. In Phoenix, prefer the existing `DebouncedSearch` component for search fields.
-
-**Incorrect (effect re-runs on every callback change):**
+**Incorrect: effect re-runs on every callback change**
 
 ```tsx
 function SearchInput({ onSearch }: { onSearch: (q: string) => void }) {
@@ -3787,15 +3778,13 @@ function SearchInput({ onSearch }: { onSearch: (q: string) => void }) {
     const timeout = setTimeout(() => onSearch(query), 300)
     return () => clearTimeout(timeout)
   }, [query, onSearch])
-
-  return <input aria-label="Search" value={query} onChange={(event) => setQuery(event.target.value)} />
 }
 ```
 
-**Correct (using React's useEffectEvent):**
+**Correct: using React's useEffectEvent**
 
 ```tsx
-import { useEffect, useEffectEvent, useState } from 'react'
+import { useEffectEvent } from 'react';
 
 function SearchInput({ onSearch }: { onSearch: (q: string) => void }) {
   const [query, setQuery] = useState('')
@@ -3805,12 +3794,8 @@ function SearchInput({ onSearch }: { onSearch: (q: string) => void }) {
     const timeout = setTimeout(() => onSearchEvent(query), 300)
     return () => clearTimeout(timeout)
   }, [query])
-
-  return <input aria-label="Search" value={query} onChange={(event) => setQuery(event.target.value)} />
 }
 ```
-
-Reference: [useEffectEvent](https://react.dev/reference/react/useEffectEvent).
 
 ---
 

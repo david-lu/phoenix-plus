@@ -23,11 +23,7 @@ Explore a few existing components to match the established file structure (compo
 
 ## Memoization
 
-React Compiler is enabled in `js/app/vite.config.mts`. Rely on it for routine memoization, including callback props; do not add `useMemo`, `useCallback`, or `React.memo` by habit or copy them from generic performance examples.
-
-Manual memoization remains an escape hatch when profiling shows a missed optimization or an integration needs controlled memoization. Document the reason and verify it in the affected interaction. Preserve existing memoization until its purpose is understood; memoization must not be required for correctness.
-
-Reference: [React Compiler introduction](https://react.dev/learn/react-compiler/introduction).
+React Compiler is enabled — do NOT use `useMemo`, `useCallback`, or `React.memo`. The compiler handles memoization automatically. This includes callback props passed to children; define them inline without wrapping in `useCallback`.
 
 ## Conditional class names
 
@@ -63,9 +59,9 @@ For debounced search/filter inputs, compose the shared `DebouncedSearch` field i
 
 For expensive context-driven updates (tree filtering, list filtering, global expand/collapse), keep transition policy with the state owner: expose context actions whose provider wraps the underlying state update in `startTransition`, and let consumers call those actions directly.
 
-## Overlays: Drawer, ViewportModal, and Modal
+## Overlays: Drawer vs. Modal
 
-Choose an overlay by which parts of the app must remain interactive. The overlay primitives live in `js/app/src/components/core/overlay/`.
+Phoenix has two overlay components with different purposes. Choosing the wrong one breaks the interaction model.
 
 ### Drawer (`components/core/overlay/Drawer.tsx`)
 
@@ -79,24 +75,22 @@ A **non-modal** right-side panel. Use for **list-detail** flows where the user s
 
 Use `Drawer` when: the user needs to glance at details and return to the list without losing context (traces, spans, sessions).
 
-### ViewportModal (`components/core/overlay/ViewportModal.tsx`)
-
-A centered dialog paired with `ViewportModalOverlay`. In the app frame, it blocks the application viewport while keeping the PXI assistant rail interactive. Use it for ordinary forms and confirmations where the assistant should remain available. Outside the app frame, it falls back to a document-body portal; the scoped behavior depends on the frame provider.
-
 ### Modal (`components/core/overlay/Modal.tsx`)
 
-A centered dialog paired with `ModalOverlay` that blocks the whole app, including the assistant rail. Use it when the interaction requires application-wide focus.
+A **modal** overlay that demands focus. Comes in two variants:
 
-Both modal components support `size="S" | "M" | "L" | "fullscreen"`. Use size to accommodate content within the chosen interaction scope. Neither has a `variant` prop; a larger dialog does not require a different overlay scope.
+- `variant="default"` — centered dialog with backdrop. Use for confirmations, forms, and focused workflows that require the user's full attention.
+- `variant="slideover"` — full-height right-side panel with backdrop. Use when the content needs more space than a centered dialog but still requires modal focus (e.g., a complex creation form that shouldn't compete with the page behind it).
+
+Both variants block interaction with the page behind them via `ModalOverlay`.
 
 ### Decision guide
 
 | Signal | Use |
 |--------|-----|
 | User is browsing a list and inspecting items | `Drawer` |
-| A form or confirmation blocks the page while the assistant remains available | `ViewportModalOverlay` + `ViewportModal` |
-| The interaction must block the entire app, including the assistant | `ModalOverlay` + `Modal` |
-| Modal content needs more space | Choose `size` on the modal appropriate to the interaction scope |
+| User must complete an action before continuing | `Modal` (default) |
+| Modal content needs full-height panel layout | `Modal` (slideover) |
 
 ## UX: list-detail pattern
 

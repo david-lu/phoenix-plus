@@ -1,67 +1,75 @@
 ---
-title: Use useTransition for Non-Urgent Actions
+title: Use useTransition Over Manual Loading States
 impact: LOW
-impactDescription: tracks pending actions while keeping input responsive
+impactDescription: reduces re-renders and improves code clarity
 tags: rendering, transitions, useTransition, loading, state
 ---
 
-## Use useTransition for Non-Urgent Actions
+## Use useTransition Over Manual Loading States
 
-Use `useTransition` when an Action updates non-urgent UI and needs pending feedback. Explicit loading state or a data library's pending state remains appropriate for other work. A transition does not cancel network requests or guarantee their completion order.
+Use `useTransition` instead of manual `useState` for loading states. This provides built-in `isPending` state and automatically manages transitions.
 
-Keep controlled input updates urgent. State updates after `await` need another `startTransition` to be marked as transitions. When requests can overlap, handle stale responses separately:
+**Incorrect (manual loading state):**
 
 ```tsx
-import { useRef, useState, useTransition } from 'react'
-
-function SearchResults({
-  fetchResults,
-}: {
-  fetchResults: (query: string) => Promise<string[]>
-}) {
+function SearchResults() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<string[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
-  const latestRequest = useRef(0)
+  const [results, setResults] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSearch = (value: string) => {
+  const handleSearch = async (value: string) => {
+    setIsLoading(true)
     setQuery(value)
-    setError(null)
-    const requestId = ++latestRequest.current
-
-    startTransition(async () => {
-      try {
-        const data = await fetchResults(value)
-        if (requestId !== latestRequest.current) return
-
-        startTransition(() => {
-          setResults(data)
-        })
-      } catch {
-        if (requestId !== latestRequest.current) return
-        startTransition(() => {
-          setError('Search failed. Try again.')
-        })
-      }
-    })
+    const data = await fetchResults(value)
+    setResults(data)
+    setIsLoading(false)
   }
 
   return (
     <>
-      <input
-        aria-label="Search"
-        value={query}
-        onChange={(event) => handleSearch(event.target.value)}
-      />
-      {isPending && <p role="status">Searching…</p>}
-      {error && <p role="alert">{error}</p>}
-      <ul>{results.map((result, index) => <li key={index}>{result}</li>)}</ul>
+      <input onChange={(e) => handleSearch(e.target.value)} />
+      {isLoading && <Spinner />}
+      <ResultsList results={results} />
     </>
   )
 }
 ```
 
-The request ID prevents older responses from replacing newer results; it does not abort the requests. React currently batches overlapping transitions, so pending state and result rendering can wait for earlier Actions to finish. Use the data layer's cancellation/ordering support when available. In Phoenix, use the existing Relay flow and shared `DebouncedSearch` field rather than copying this standalone fetch example.
+**Correct (useTransition with built-in pending state):**
 
-Reference: [useTransition](https://react.dev/reference/react/useTransition).
+```tsx
+import { useTransition, useState } from 'react'
+
+function SearchResults() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [isPending, startTransition] = useTransition()
+
+  const handleSearch = (value: string) => {
+    setQuery(value) // Update input immediately
+    
+    startTransition(async () => {
+      // Fetch and update results
+      const data = await fetchResults(value)
+      setResults(data)
+    })
+  }
+
+  return (
+    <>
+      <input onChange={(e) => handleSearch(e.target.value)} />
+      {isPending && <Spinner />}
+      <ResultsList results={results} />
+    </>
+  )
+}
+```
+
+**Benefits:**
+
+- **Automatic pending state**: No need to manually manage `setIsLoading(true/false)`
+- **Error resilience**: Pending state correctly resets even if the transition throws
+- **Better responsiveness**: Keeps the UI responsive during updates
+- **Interrupt handling**: New transitions automatically cancel pending ones
+
+Reference: [useTransition](https://react.dev/reference/react/useTransition)
